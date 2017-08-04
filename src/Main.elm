@@ -13,24 +13,38 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 
+import Msg exposing (..)
+
+import Rummy exposing (..)
+
+initialHand = List.map Blue (List.range 4 10)
+initialTable =
+    [ Group [Blue 4, Blue 4, Blue 4]
+    , Run [Green 3, Green 4, Green 5, Green 6]]
+
+
+type alias Model =
+    { table : Table
+    , hand : Hand
+    }
+
+
 -- MODEL
 
 init : Location -> ( Model, Cmd Msg )
 init location =
-    ( 4, Cmd.none )
+    (
+    { table = initialTable
+    , hand = initialHand
+    }, Cmd.none )
 
 
-type alias Model = Int
-
-type Msg = ChangeMsg
-         | OnLocationChange Location
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view model =
-    div [] [text "Hi"]
+view model = printBoth (.hand model) (.table model)
 
 
 

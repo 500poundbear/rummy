@@ -44,7 +44,7 @@ firstCard : Cards -> Maybe Card
 firstCard = nthCard 0
 
 lastCard : Cards -> Maybe Card
-lastCard = nthCard ((length cards) - 1)
+lastCard cards = nthCard ((List.length cards) - 1) cards
 
 sameSuit : Card -> Card -> Bool
 sameSuit card1 card2 =

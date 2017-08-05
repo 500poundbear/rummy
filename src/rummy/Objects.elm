@@ -113,3 +113,53 @@ removeCardHand hand card =
             Just (removeDriver [] hand)
         else
             Nothing
+
+
+addCard : Card -> Clump -> Clump
+addCard card clump =
+    case clump of
+        Group v -> Group <| v ++ [card]
+        Run v -> Run <| v ++ [card]
+
+{- Removes a single instance of the card. Fails silently if card not found -}
+removeCard : Card -> Clump -> Clump
+removeCard card clump =
+    let
+        driver = \fst snd ->
+            let
+                currentCard = case (List.head snd) of
+                    Just v -> v
+                    Nothing -> Blue -1
+                restCards = case (List.tail snd) of
+                    Just v -> v
+                    Nothing -> []
+            in
+                if List.isEmpty snd then
+                    fst
+                else if sameCard card currentCard then
+                    fst ++ restCards
+                else
+                    driver (fst ++ [currentCard]) restCards
+    in
+        case clump of
+            Group v -> Group <| driver [] v
+            Run v -> Run <| driver [] v
+
+sortCards : Clump -> Clump
+sortCards x = x
+
+addAndReorderCards : Card -> Clump -> Clump
+addAndReorderCards card clump = sortCards <| addCard card clump
+
+removeAndReorderCards : Card -> Clump -> Clump
+removeAndReorderCards card clump = sortCards <| removeCard card clump
+
+{- Swaps a card for another card in the clump -}
+{-
+patchFromHand : Card -> Card -> Clump -> Clump
+patchFromhand card oldcard clump =
+    case clump of
+            Group v ->
+
+            Run v ->
+-}

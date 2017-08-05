@@ -108,13 +108,12 @@ body {
   padding: 0 10px;
 }
 .cardd {
-    padding: 1px 3px;
-    margin: 1px 3px;
+    display:inline-block;
+    padding: 10px 20px;
+    margin: 5px 8px;
     -webkit-border-radius: 4px;
     -moz-border-radius: 4px;
     border-radius: 4px;
-    border: 1px solid #abafb5;
-    background-color: #f7f7f7;
 }
 .group {
     background-color: #f4d142;
@@ -127,4 +126,20 @@ body {
     display:inline-block;
     padding: 3px 6px;
     margin: 3px 5px;
+}
+.blue {
+    border: 1px solid #3090a3;
+    background-color: #97e5ef;
+}
+.green {
+    border: 1px solid #2e8227;
+    background-color: #a5dba0;
+}
+.yellow {
+    border: 1px solid #445566;
+    background-color: #efd58d;
+}
+.red {
+    border: 1px solid #bc3f20;
+    background-color: #e88e78;
 }

@@ -17,16 +17,7 @@ import Msg exposing (..)
 
 import Rummy exposing (..)
 
-initialHand = List.map Blue (List.range 4 10)
-initialTable =
-    [ Group [Blue 4, Blue 4, Blue 4]
-    , Run [Green 3, Green 4, Green 5, Green 6]]
-
-
-type alias Model =
-    { table : Table
-    , hand : Hand
-    }
+type alias Model = RummyModel
 
 
 -- MODEL
@@ -44,7 +35,7 @@ init location =
 
 
 view : Model -> Html Msg
-view model = printBoth (.hand model) (.table model)
+view model = viewRummyModel model
 
 
 

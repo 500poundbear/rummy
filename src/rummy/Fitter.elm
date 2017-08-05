@@ -48,7 +48,7 @@ fitRun card run =
         cards = case run of
             Run v -> v
             _ -> []
-        cardsLen = length cards
+        cardsLen = List.length cards
         fstCard = case (firstCard cards) of
             Nothing -> Blue -1
             Just v -> v
@@ -74,6 +74,19 @@ fitRun card run =
         else
             Nothing
 
+{- Given a card that we MUST use, see what score we get.
+   There are a few things that can be done:
+        (1) fitGroup
+            - this card can extend a group
+        (2) fitRun
+            - this card can extend a run
 
-fitTile : Card -> Hand -> Table -> Maybe ((Hand, Table), Int)
-fitTile card hand table = Nothing
+
+    If a new run or group can be formed, this will results in more points
+    then simply extending a clump.
+
+    The interesting portion is the bias between forming a new run vs forming
+    a new group. 
+-}
+fitTile : Card -> Hand -> Table -> Maybe <| ((Hand, Table), Int)
+fitTile card hand table =

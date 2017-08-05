@@ -43,6 +43,25 @@ suite =
                         expectedResults = [True, True, False, False]
                     in
                         Expect.equal res expectedResults
+            , test "returns whether two cards are identical" <|
+                \_ ->
+                    let
+                        cardsA =
+                            [ Blue 100
+                            , Red 1
+                            , Yellow 10
+                            , Green 5
+                            ]
+                        cardsB =
+                            [ Blue 100
+                            , Red 10
+                            , Yellow 10
+                            , Green 5
+                            ]
+                        res = List.map2 sameCard cardsA cardsB
+                        expectedResults = [True, False, True, True]
+                    in
+                        Expect.equal res expectedResults
             ]
         , describe "Cards"
             [ test "can return first card" <|
@@ -88,5 +107,50 @@ suite =
                     in
                         Expect.notEqual res expectedResults
 
+            ]
+        , describe "Hands"
+            [ test "card present in hand" <|
+                \_ ->
+                    let
+                        cards =
+                            [ Blue 100
+                            , Red 1
+                            , Yellow 10
+                            , Green 5
+                            ]
+                        hand =
+                            [ Blue 100
+                            , Red 3
+                            , Yellow 10
+                            , Green 5
+                            ]
+                        res = List.map (cardPresentHand hand) cards
+                        expectedResults = [True, False, True, True]
+                    in
+                        Expect.equal res expectedResults
+             , test "remove card from hand if possible" <|
+                \_ ->
+                    let
+                        cards =
+                            [ Blue 100
+                            , Red 1
+                            , Yellow 10
+                            , Green 5
+                            ]
+                        hand =
+                            [ Blue 100
+                            , Red 3
+                            , Yellow 10
+                            , Green 5
+                            ]
+                        res = List.map (removeCardHand hand) cards
+                        expectedResults =
+                            [ Just [Red 3, Yellow 10, Green 5]
+                            , Nothing
+                            , Just [Blue 100, Red 3, Green 5]
+                            , Just [Blue 100, Red 3, Yellow 10]
+                            ]
+                    in
+                        Expect.equal res expectedResults
             ]
         ]

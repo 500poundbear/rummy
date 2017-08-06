@@ -23,6 +23,29 @@ cardValue card =
         Red v -> v
         Yellow v -> v
 
+cardSuit : Card -> Int
+cardSuit card =
+    case card of
+        Blue v -> 0
+        Green v -> 1
+        Red v -> 2
+        Yellow v -> 3
+
+convertToCard : Int -> Int -> Card
+convertToCard suit value =
+    let
+        validSuit = suit >= 0 && suit <= 3
+        validValue = value > 0 && value <= 13
+    in
+        if validSuit && validValue then
+            case suit of
+                0 -> Blue value
+                1 -> Green value
+                2 -> Red value
+                3 -> Yellow value
+                _ -> Blue -1
+        else
+            Blue -1 {- In the future create an invalid card instead of throwing a maybe -}
 
 nthCard : Int -> Cards -> Maybe Card
 nthCard n cards =
@@ -146,7 +169,19 @@ removeCard card clump =
             Run v -> Run <| driver [] v
 
 sortCards : Clump -> Clump
-sortCards x = x
+sortCards clump =
+    let
+        comparafn = \a b ->
+            compare (cardValue a) (cardValue b)
+        cards = case clump of
+            Group v -> v
+            Run v -> v
+        results = List.sortWith comparafn cards
+
+    in
+        case clump of
+            Group v -> Group results
+            Run v -> Run results
 
 addAndReorderCards : Card -> Clump -> Clump
 addAndReorderCards card clump = sortCards <| addCard card clump
@@ -155,11 +190,34 @@ removeAndReorderCards : Card -> Clump -> Clump
 removeAndReorderCards card clump = sortCards <| removeCard card clump
 
 {- Swaps a card for another card in the clump -}
-{-
-patchFromHand : Card -> Card -> Clump -> Clump
-patchFromhand card oldcard clump =
-    case clump of
-            Group v ->
 
-            Run v ->
+patchClump : Card -> Card -> Clump -> Clump
+patchClump card oldcard clump =
+    case clump of
+        Group v -> addAndReorderCards card <|removeCard oldcard clump
+        Run v -> addAndReorderCards card <| removeCard oldcard clump
+
+{-
+{- Given a card and n cards we want to pick up-}
+pluckFromClump : Card -> Int -> Clump -> Maybe (Clump, Cards)
 -}
+
+
+{- Generate a list of Cards, given the chain length we want (3)-}
+generatePossibilities : Int -> Card -> List Cards
+generatePossibilities n card =
+    let
+        suit = cardSuit card
+        value = cardValue card
+
+        rangeStartInt = max 1 (value - (n - 1))
+        rangeEndInt = min 13 (value + (n - 1)) {- To make this adjustable, based on number of cards-}
+        rangeEndStartingInt = rangeEndInt - (n - 1)
+
+        generateRange = \len n ->
+            List.map (convertToCard suit) <| List.range n (n + len - 1)
+    in
+        if (rangeEndStartingInt > rangeStartInt) then
+            List.map (generateRange n) (List.range rangeStartInt rangeEndStartingInt)
+        else
+            []

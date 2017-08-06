@@ -15,6 +15,8 @@ type alias Clumps = List Clump
 type alias Hand = Cards
 type alias Table = Clumps
 
+type alias Possibility = Maybe ((Hand, Table), Int)
+
 cardValue : Card -> Int
 cardValue card =
     case card of
@@ -197,13 +199,62 @@ patchClump card oldcard clump =
         Group v -> addAndReorderCards card <|removeCard oldcard clump
         Run v -> addAndReorderCards card <| removeCard oldcard clump
 
-{-
-{- Given a card and n cards we want to pick up-}
-pluckFromClump : Card -> Int -> Clump -> Maybe (Clump, Cards)
--}
+replaceClump : Table -> Clump -> Clump -> Table
+replaceClump table oldClump newClump =
+    let
+        clumpHead = case (List.head table) of
+            Just v -> v
+            Nothing -> Group []
+        clumpTail = case (List.tail table) of
+            Just v -> v
+            Nothing -> []
+    in
+        if sameClump clumpHead oldClump then
+            clumpTail
+        else
+            (replaceClump clumpTail oldClump newClump)
+
+sameClump : Clump -> Clump -> Bool
+sameClump clump1 clump2 =
+    let
+        equalCards = \a b ->
+            let
+                headA = case (List.head a) of
+                    Just v -> v
+                    Nothing -> Blue -1
+                headB = case (List.head b) of
+                    Just v -> v
+                    Nothing -> Red -1
+                restA = case (List.tail a) of
+                    Just v -> v
+                    Nothing -> []
+                restB = case (List.tail b) of
+                    Just v -> v
+                    Nothing -> []
+            in
+                if List.isEmpty a && List.isEmpty b then
+                    True
+                else if sameCard headA headB then
+                    equalCards restA restB
+                else
+                    False
+    in
+        case (sortCards clump1) of
+            Group v ->
+                case (sortCards clump2) of
+                    Group w -> equalCards v w
+                    Run w -> False
+            Run v ->
+                case (sortCards clump2) of
+                    Group w -> False
+                    Run w -> equalCards v w
+
+removeClump : Clump -> Table -> Table
+removeClump clump table = table
 
 
 {- Generate a list of Cards, given the chain length we want (3)-}
+{- Exclude the current card -}
 generatePossibilities : Int -> Card -> List Cards
 generatePossibilities n card =
     let
@@ -217,7 +268,7 @@ generatePossibilities n card =
         generateRange = \len n ->
             List.map (convertToCard suit) <| List.range n (n + len - 1)
     in
-        if (rangeEndStartingInt > rangeStartInt) then
+        if (rangeEndStartingInt >= rangeStartInt) then
             List.map (generateRange n) (List.range rangeStartInt rangeEndStartingInt)
         else
             []

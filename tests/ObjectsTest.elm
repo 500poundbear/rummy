@@ -315,4 +315,37 @@ suite =
                     in
                         Expect.equal clumpGroupAfter (patchClump newCard oldCard clumpGroup)
             ]
+        , describe "Possibilities"
+            [ test "can be generated" <|
+                \_ ->
+                    let
+                        lisLen = 3
+                        cards =
+                            [ Blue 4
+                            , Red 5
+                            , Yellow 1
+                            , Green 10
+                            , Red 13
+                            ]
+                        res = List.map (generatePossibilities 3) cards
+                        expectedResults =
+                            [ [ [Blue 2, Blue 3, Blue 4]
+                              , [Blue 3, Blue 4, Blue 5]
+                              , [Blue 4, Blue 5, Blue 6]
+                              ]
+                            , [ [Red 3, Red 4, Red 5]
+                              , [Red 4, Red 5, Red 6]
+                              , [Red 5, Red 6, Red 7]
+                              ]
+                            , [ [Yellow 1, Yellow 2, Yellow 3]
+                              ]
+                            , [ [Green 8, Green 9, Green 10]
+                              , [Green 9, Green 10, Green 11]
+                              , [Green 10, Green 11, Green 12]
+                              ]
+                            , [ [Red 11, Red 12, Red 13]]
+                            ]
+                    in
+                        Expect.equal res expectedResults
+            ]
         ]

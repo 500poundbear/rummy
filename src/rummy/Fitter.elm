@@ -24,7 +24,7 @@ pickRuns table =
     List.filter isRun table
 
 {- Since it is already a group, this is the 4++ card -}
-fitGroup : Card -> Clump -> Maybe (Clump, Int)
+fitGroup : Card -> Clump -> Maybe ((Clump, Cards), Int)
 fitGroup card group =
     let
         cardVal = cardValue card
@@ -36,9 +36,31 @@ fitGroup card group =
             Just v -> cardValue v
     in
         if cardVal == cardHVal then
-            Just <| (Group (cards ++ [card]), cardHVal)
+            Just <| ((Group (cards ++ [card]), []), cardHVal)
         else
             Nothing
+
+{- The aim is to select a list of clumps, and just pick the first-}
+{- Hand is redundant, but here for the functions to require the same params -}
+fitRunRunner : Card -> Hand -> Table -> Possibility
+fitRunRunner card hand table =
+    let
+        runs = pickRuns table
+        oldClump = case (List.head runs) of
+            Just v -> v
+            Nothing -> Group []
+    in
+        case (List.head<|List.map (fitRun card) runs) of
+            Just v ->
+                let
+                    ((newClump, _), score) = case v of
+                        Just v -> v
+                        Nothing -> ((Group [], []), -1)
+
+                    newTable = replaceClump table oldClump newClump
+                in
+                    Just ((hand, newTable), score)
+            Nothing -> Nothing
 
 {- Since it is already a run, this is the 4++ card -}
 fitRun : Card -> Clump -> Maybe ((Clump, Cards), Int)
@@ -74,9 +96,8 @@ fitRun card run =
         else
             Nothing
 
-{-
-formFromHand : Int -> Card -> Hand -> Table ->
--}
+
+
 {- Given a card that we MUST use, see what score we get.
    There are a few things that can be done:
         (1) fitGroup
@@ -121,10 +142,91 @@ formFromHand : Int -> Card -> Hand -> Table ->
 
     returns the first value in
 -}
+formFromHand : Card -> Hand -> Table -> Possibility
+formFromHand card hand table =
+    let
+        res =
+            [ fitRunRunner card hand table
+            , fitRunRunner card hand table
+            ]
+        maxFn : Possibility -> Possibility -> Possibility
+        maxFn newPossibility currentRecord =
+            case newPossibility of
+                Just newV->
+                    case currentRecord of
+                        Nothing -> newPossibility
+                        Just v ->
+                            let
+                                {- Compare which possibility has a larger value -}
+                                (_, newInt) = newV
+                                (_, recordInt) = v
+                            in
+                                if newInt > recordInt then
+                                    Just newV
+                                else
+                                    Just v
+                Nothing ->
+                    currentRecord
+    in
+        List.foldl maxFn Nothing res
 
 
+{- Go through every card in hand, running formFromHand -}
+fitter : Hand -> Table -> Maybe (Hand, Table)
+fitter hand table =
+    let
+        handLen = List.length hand
 
-{-
-fitTile : Card -> Hand -> Table -> Maybe ((Hand, Table), Int)
-fitTile card hand table = Nothing
--}
+        helper = \ind ->
+            let
+                theCard = case (nthCard ind hand) of
+                    Just v -> v
+                    Nothing -> Blue -1
+                theHand = case (removeCardHand hand theCard) of
+                    Just v -> v
+                    Nothing -> []
+            in
+                formFromHand theCard theHand table
+
+        combis = List.map helper <| List.range 0 (handLen - 1)
+
+        getBest a b=
+            case a of
+                Just v ->
+                    let
+                        ((hand, table), score) = v
+                        newb = case b of
+                            Just v ->
+                                let
+                                    ((_, _), bScore) = v
+                                in
+                                    if bScore < score then
+                                        a
+                                    else
+                                        b
+                            Nothing ->
+                                a
+                    in
+                        newb
+
+                Nothing -> b
+
+        {- a fold function that gets the max value-}
+        best = List.foldl getBest Nothing combis
+    in
+        case best of
+            Just v -> Just <| Tuple.first v
+            Nothing -> Nothing
+
+fitterRunner : Hand -> Table -> (Hand, Table)
+fitterRunner hand table =
+    let
+        results = fitter hand table
+    in
+        case results of
+            Just v ->
+                let
+                    (nhand, ntable) = v
+                in
+                    fitterRunner nhand ntable
+            Nothing -> (hand, table)

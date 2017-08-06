@@ -314,6 +314,33 @@ suite =
                             ]
                     in
                         Expect.equal clumpGroupAfter (patchClump newCard oldCard clumpGroup)
+            , test "can replace clump" <|
+                \_ ->
+                    let
+                        clumpOld = Group
+                            [ Yellow 4
+                            , Red 4
+                            , Blue 4
+                            ]
+                        clumpNew = Group
+                            [ Yellow 4
+                            , Red 4
+                            , Red 4
+                            ]
+                        table =
+                            [ Group [Blue 3, Red 3, Yellow 3]
+                            , Group [Yellow 10, Green 10, Blue 10]
+                            , Run [Yellow 1, Yellow 2, Yellow 3]
+                            , Group [Yellow 4, Red 4, Blue 4]
+                            ]
+                        expected =
+                            [ Group [Blue 3, Red 3, Yellow 3]
+                            , Group [Yellow 10, Green 10, Blue 10]
+                            , Run [Yellow 1, Yellow 2, Yellow 3]
+                            , Group [Yellow 4, Red 4, Blue 4]
+                            ]
+                    in
+                        Expect.equal expected (replaceClump table clumpOld clumpNew)
             ]
         , describe "Possibilities"
             [ test "can be generated" <|

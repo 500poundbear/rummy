@@ -147,7 +147,6 @@ formFromHand card hand table =
     let
         res =
             [ fitRunRunner card hand table
-            , fitRunRunner card hand table
             ]
         maxFn : Possibility -> Possibility -> Possibility
         maxFn newPossibility currentRecord =

@@ -74,16 +74,8 @@ lastCard cards = nthCard ((List.length cards) - 1) cards
 sameSuit : Card -> Card -> Bool
 sameSuit card1 card2 =
     let
-        card1V = case card1 of
-            Blue v -> 0
-            Green v -> 1
-            Red v -> 2
-            Yellow v -> 3
-        card2V = case card2 of
-            Blue v -> 0
-            Green v -> 1
-            Red v -> 2
-            Yellow v -> 3
+        card1V = cardSuit card1
+        card2V = cardSuit card2
     in
         card1V == card2V
 
@@ -175,10 +167,23 @@ sortCards clump =
     let
         comparafn = \a b ->
             compare (cardValue a) (cardValue b)
-        cards = case clump of
-            Group v -> v
-            Run v -> v
-        results = List.sortWith comparafn cards
+
+        comparGrp = \a b ->
+            let
+                valA = cardSuit a
+                valB = cardSuit b
+            in
+                if valA < valB then
+                    LT
+                else if valA == valB then
+                    EQ
+                else
+                    GT
+
+        results = case clump of
+            Group v -> List.sortWith comparGrp v
+            Run v -> List.sortWith comparafn v
+
 
     in
         case clump of
@@ -196,8 +201,8 @@ removeAndReorderCards card clump = sortCards <| removeCard card clump
 patchClump : Card -> Card -> Clump -> Clump
 patchClump card oldcard clump =
     case clump of
-        Group v -> addAndReorderCards card <|removeCard oldcard clump
-        Run v -> addAndReorderCards card <| removeCard oldcard clump
+        Group v -> sortCards <| addAndReorderCards card <|removeCard oldcard clump
+        Run v -> sortCards <| addAndReorderCards card <| removeCard oldcard clump
 
 replaceClump : Table -> Clump -> Clump -> Table
 replaceClump table oldClump newClump =
@@ -210,9 +215,9 @@ replaceClump table oldClump newClump =
             Nothing -> []
     in
         if sameClump clumpHead oldClump then
-            clumpTail
+            [newClump] ++ clumpTail
         else
-            (replaceClump clumpTail oldClump newClump)
+            [clumpHead] ++ (replaceClump clumpTail oldClump newClump)
 
 sameClump : Clump -> Clump -> Bool
 sameClump clump1 clump2 =
@@ -272,3 +277,26 @@ generatePossibilities n card =
             List.map (generateRange n) (List.range rangeStartInt rangeEndStartingInt)
         else
             []
+
+getBestPossibility : List Possibility -> Possibility
+getBestPossibility possibilities =
+    let
+        maxFn newPossibility currentRecord =
+            case newPossibility of
+                Just newV->
+                    case currentRecord of
+                        Nothing -> newPossibility
+                        Just v ->
+                            let
+                                {- Compare which possibility has a larger value -}
+                                (_, newInt) = newV
+                                (_, recordInt) = v
+                            in
+                                if newInt > recordInt then
+                                    Just newV
+                                else
+                                    Just v
+                Nothing ->
+                    currentRecord
+    in
+        List.foldl maxFn Nothing possibilities

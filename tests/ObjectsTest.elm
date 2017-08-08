@@ -232,31 +232,27 @@ suite =
                     let
                         card = Yellow 10
                         clumpRun = Run
-                            [ Blue 100
+                            [ Yellow 7
+                            , Yellow 8
+                            , Yellow 9
                             , Yellow 10
-                            , Yellow 10
-                            , Red 1
-                            , Yellow 10
-                            , Green 5
                             ]
                         clumpRunAfter = Run
-                            [ Blue 100
-                            , Yellow 10
-                            , Red 1
-                            , Yellow 10
-                            , Green 5
+                            [ Yellow 7
+                            , Yellow 8
+                            , Yellow 9
                             ]
                     in
                         Expect.equal clumpRunAfter (removeCard card clumpRun)
             , test "can sort cards in a clump" <|
                 \_ ->
                     let
-                        clumpGroup = Group
+                        clumpGroup = Run
                             [ Red 4
                             , Red 2
                             , Red 1
                             ]
-                        clumpGroupAfter = Group
+                        clumpGroupAfter = Run
                             [ Red 1
                             , Red 2
                             , Red 4
@@ -267,12 +263,12 @@ suite =
                 \_ ->
                     let
                         add = Red 3
-                        clumpGroup = Group
+                        clumpGroup = Run
                             [ Red 4
                             , Red 2
                             , Red 1
                             ]
-                        clumpGroupAfter = Group
+                        clumpGroupAfter = Run
                             [ Red 1
                             , Red 2
                             , Red 3
@@ -284,13 +280,13 @@ suite =
                 \_ ->
                     let
                         rm = Red 4
-                        clumpGroup = Group
+                        clumpGroup = Run
                             [ Red 4
                             , Red 2
                             , Red 1
                             , Red 5
                             ]
-                        clumpGroupAfter = Group
+                        clumpGroupAfter = Run
                             [ Red 1
                             , Red 2
                             , Red 5
@@ -308,9 +304,9 @@ suite =
                             , Blue 4
                             ]
                         clumpGroupAfter = Group
-                            [ Yellow 4
+                            [ Red 4
                             , Red 4
-                            , Red 4
+                            , Yellow 4
                             ]
                     in
                         Expect.equal clumpGroupAfter (patchClump newCard oldCard clumpGroup)
@@ -337,10 +333,75 @@ suite =
                             [ Group [Blue 3, Red 3, Yellow 3]
                             , Group [Yellow 10, Green 10, Blue 10]
                             , Run [Yellow 1, Yellow 2, Yellow 3]
-                            , Group [Yellow 4, Red 4, Blue 4]
+                            , Group [Yellow 4, Red 4, Red 4]
                             ]
                     in
                         Expect.equal expected (replaceClump table clumpOld clumpNew)
+            , test "detect if identical clump" <|
+                \_ ->
+                    let
+                        clump1 = Group
+                            [ Yellow 4
+                            , Red 4
+                            , Blue 4
+                            , Green 4
+                            ]
+                        clump2 = Group
+                            [ Yellow 4
+                            , Red 4
+                            , Green 4
+                            , Blue 4
+                            ]
+                        clump3 = Run
+                            [ Red 3
+                            , Red 4
+                            , Red 5
+                            , Red 6
+                            ]
+                        clump4 = Run
+                            [ Red 5
+                            , Red 4
+                            , Red 3
+                            , Red 6
+                            ]
+                        clump5 = Run
+                            [ Red 3
+                            , Red 4
+                            , Red 5
+                            , Red 6
+                            ]
+                        clump6 = Run
+                            [ Red 5
+                            , Red 4
+                            , Red 3
+                            ]
+                        clump7 = Group
+                            [ Yellow 4
+                            , Red 4
+                            , Blue 4
+                            ]
+                        clump8 = Group
+                            [ Yellow 4
+                            , Red 4
+                            , Green 4
+                            ]
+
+                        leftSide =
+                            [ clump1
+                            , clump3
+                            , clump5
+                            , clump7
+                            ]
+                        rightSide =
+                            [ clump2
+                            , clump4
+                            , clump6
+                            , clump8
+                            ]
+                        expected = [ True, True, False, False]
+                    in
+                        Expect.equal expected
+                            (List.map2 sameClump leftSide rightSide)
             ]
         , describe "Possibilities"
             [ test "can be generated" <|
@@ -375,4 +436,29 @@ suite =
                     in
                         Expect.equal res expectedResults
             ]
+            , describe "Possibility Object"
+                [ test "can determine maximum with getBestPossibility" <|
+                    \_ ->
+                        let
+                            possibilities =
+                                [ Nothing
+                                , Just (([], [Group [Red 5, Green 5, Blue 5]]), 15)
+                                , Just (([], [Run [Red 4, Red 5, Red 6, Red 7 ]]), 4)
+                                , Just (([Red 5], [Group [Red 8, Blue 8, Green 8, Yellow 8]]), 8)
+                                , Nothing
+                                ]
+                            expectedResult = Just (([], [Group [Red 5, Green 5, Blue 5]]), 15)
+                        in
+                            Expect.equal (getBestPossibility possibilities) expectedResult
+                , test "getBestPossibility can return Nothing appropriately" <|
+                    \_ ->
+                        let
+                            possibilities =
+                                [ Nothing
+                                , Nothing
+                                ]
+                            expectedResult = Nothing
+                        in
+                            Expect.equal (getBestPossibility possibilities) expectedResult
+                ]
         ]

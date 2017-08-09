@@ -12,17 +12,74 @@ suite : Test
 suite =
     describe "The Fitter module"
         [ describe "formClump works"
-            [ test "forms the right run" <|
+            [ test "forms the right run from draft of 2 (from hand)" <|
                 \_ ->
                     let
-                        card = Red 5
-                        clump = Group [Red 5, Blue 5, Yellow 5, Green 5]
-                        res = fitGroup card clump
-                        expectedResults = Nothing
+                        clump = Run [Red 5, Red 6]
+                        hand = [Blue 5, Red 7, Yellow 10]
+                        table = []
+                        res = formClump clump hand table 11
+                        expectedResults =
+                            [
+                            ((Run [Red 5, Red 6, Red 7], ([Blue 5, Yellow 10], [])), 18)
+                            ]
+                    in
+                        Expect.equal res expectedResults
+            , test "forms the right run from draft of 1 (from hand)" <|
+                \_ ->
+                    let
+                        clump = Run [Red 5]
+                        hand = [Blue 5, Red 6, Red 7, Yellow 10]
+                        table = []
+                        res = formClump clump hand table 5
+                        expectedResults =
+                            [
+                            ((Run [Red 5, Red 6, Red 7], ([Blue 5, Yellow 10], [])), 18)
+                            ]
+                    in
+                        Expect.equal res expectedResults
+            , test "doesn't form any run appropriately (from hand)" <|
+                \_ ->
+                    let
+                        clump = Run [Red 5]
+                        hand = [Blue 5, Yellow 10]
+                        table = []
+                        res = formClump clump hand table 5
+                        expectedResults = []
+                    in
+                        Expect.equal res expectedResults
+            , test "forms runs appropriately (from table)" <|
+                \_ ->
+                    let
+                        clump = Run [Red 5]
+                        hand = [Blue 5, Yellow 10]
+                        table =
+                            [ Group [Green 6, Blue 6, Yellow 6, Red 6]
+                            , Group [Green 7, Blue 7, Yellow 7, Red 7]
+                            ]
+                        res = formClump clump hand table 5
+                        expectedResults =
+                            [ (((Run [Red 5, Red 6, Red 7]
+                                , ([Blue 5, Yellow 10],
+                                    [ Group [Green 6, Blue 6, Yellow 6]
+                                    , Group [Green 7, Blue 7, Yellow 7]
+                                    ]
+                                )),
+                                5))
+                            ]
+                    in
+                        Expect.equal res expectedResults
+            , test "forms runs appropriately (from both)" <|
+                \_ ->
+                    let
+                        clump = Run [Red 5]
+                        hand = [Blue 5, Yellow 10]
+                        table = []
+                        res = formClump clump hand table 5
+                        expectedResults = []
                     in
                         Expect.equal res expectedResults
             ]
-
         , describe "fitGroup & fitGroupRunner"
             [ test "fitGroup won't add card if group is full" <|
                 \_ ->

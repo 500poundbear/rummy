@@ -310,6 +310,23 @@ suite =
                             ]
                     in
                         Expect.equal clumpGroupAfter (patchClump newCard oldCard clumpGroup)
+            , test "can return Maybe clump when finding if card is present in table" <|
+                \_ ->
+                    let
+                        table =
+                            [ Run [Yellow 6, Yellow 7, Yellow 8]
+                            , Group [Red 11, Yellow 11, Blue 11, Green 11]
+                            , Run [Blue 1, Blue 2, Blue 3]]
+                        cards = [Yellow 10, Blue 2, Red 11, Yellow 1, Green 13]
+                        res =
+                            [ Nothing
+                            , Just <| Run [Blue 1, Blue 2, Blue 3]
+                            , Just <| Group [Red 11, Yellow 11, Blue 11, Green 11]
+                            , Nothing
+                            , Nothing
+                            ]
+                    in
+                        Expect.equal res (List.map (cardPresentTable table) cards)
             , test "can replace clump" <|
                 \_ ->
                     let
@@ -337,6 +354,53 @@ suite =
                             ]
                     in
                         Expect.equal expected (replaceClump table clumpOld clumpNew)
+        , test "can replace clump in different orders" <|
+                \_ ->
+                    let
+                        toReplace =
+                            [ Run [Yellow 3, Yellow 2, Yellow 1]
+                            , Run [Yellow 1, Yellow 2, Yellow 3]
+                            , Group [Yellow 4, Red 4, Blue 4]
+                            , Group [Red 4, Blue 4, Yellow 4]
+                            ]
+
+                        replaceWith =
+                            [ Run [Yellow 5, Yellow 6, Yellow 7]
+                            , Run [Yellow 2, Yellow 3, Yellow 4]
+                            , Group [Green 4, Red 4, Blue 4]
+                            , Group [Red 5, Blue 5, Yellow 5]
+                            ]
+
+                        table =
+                            [ Group [Blue 3, Red 3, Yellow 3]
+                            , Group [Yellow 10, Green 10, Blue 10]
+                            , Run [Yellow 1, Yellow 2, Yellow 3]
+                            , Group [Yellow 4, Red 4, Blue 4]
+                            ]
+                        expected =
+                            [ [ Group [Blue 3, Red 3, Yellow 3]
+                              , Group [Yellow 10, Green 10, Blue 10]
+                              , Run [Yellow 5, Yellow 6, Yellow 7]
+                              , Group [Yellow 4, Red 4, Blue 4]
+                              ]
+                            , [ Group [Blue 3, Red 3, Yellow 3]
+                              , Group [Yellow 10, Green 10, Blue 10]
+                              , Run [Yellow 2, Yellow 3, Yellow 4]
+                              , Group [Yellow 4, Red 4, Blue 4]
+                              ]
+                            , [ Group [Blue 3, Red 3, Yellow 3]
+                              , Group [Yellow 10, Green 10, Blue 10]
+                              , Run [Yellow 1, Yellow 2, Yellow 3]
+                              , Group [Green 4, Red 4, Blue 4]
+                              ]
+                            , [ Group [Blue 3, Red 3, Yellow 3]
+                              , Group [Yellow 10, Green 10, Blue 10]
+                              , Run [Yellow 1, Yellow 2, Yellow 3]
+                              , Group [Red 5, Blue 5, Yellow 5]
+                              ]
+                            ]
+                    in
+                        Expect.equal expected (List.map2 (replaceClump table) toReplace replaceWith)
             , test "detect if identical clump" <|
                 \_ ->
                     let

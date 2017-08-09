@@ -18,7 +18,7 @@ type alias Table = Clumps
 
 type alias Possibility = Maybe ((Hand, Table), Int)
 
-type alias Draft = ((List Card, (Hand, Table)), Int)
+type alias Draft = ((Clump, (Hand, Table)), Int)
 
 cardValue : Card -> Int
 cardValue card =
@@ -229,6 +229,46 @@ patchClump card oldcard clump =
         Group v -> sortCards <| addAndReorderCards card <|removeCard oldcard clump
         Run v -> sortCards <| addAndReorderCards card <| removeCard oldcard clump
 
+
+cardPresentClump : Clump -> Card -> Bool
+cardPresentClump clump card =
+    let
+        lis = case clump of
+            Group v -> v
+            Run v -> v
+
+        rst = case (List.tail lis) of
+            Just v -> v
+            Nothing -> []
+
+        rstClump = case clump of
+            Group v -> Group rst
+            Run v -> Run rst
+    in
+        case (List.head lis) of
+            Just x ->
+                sameCard card x || cardPresentClump rstClump card
+            Nothing -> False
+
+cardPresentTable : Table -> Card -> Maybe Clump
+cardPresentTable table card =
+    let
+        headV = case (List.head table) of
+            Just v -> v
+            Nothing -> Run []
+
+        restV = case (List.tail table) of
+            Just v -> v
+            Nothing -> []
+    in
+        if List.isEmpty table then
+            Nothing
+        else
+            if (cardPresentClump headV card) then
+                Just headV
+            else
+                cardPresentTable restV card
+
 replaceClump : Table -> Clump -> Clump -> Table
 replaceClump table oldClump newClump =
     let
@@ -239,10 +279,13 @@ replaceClump table oldClump newClump =
             Just v -> v
             Nothing -> []
     in
-        if sameClump clumpHead oldClump then
-            [newClump] ++ clumpTail
+        if List.isEmpty table then
+            []
         else
-            [clumpHead] ++ (replaceClump clumpTail oldClump newClump)
+            if sameClump clumpHead oldClump then
+                [newClump] ++ clumpTail
+            else
+                [clumpHead] ++ (replaceClump clumpTail oldClump newClump)
 
 sameClump : Clump -> Clump -> Bool
 sameClump clump1 clump2 =

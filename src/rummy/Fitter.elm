@@ -269,7 +269,8 @@ fitterRunner hand table =
 {- Given a draft, attempt to lengthen it until you get 3 -}
 {- formClump doesn't look for cards in both directions, it only looks
    for cards 1 larger than current card (to reduce search space) -}
-{- Draft: ((List Card, (Hand, Table)), Int) -}
+{- Draft: ((Clump, (Hand, Table)), Int) -}
+
 formClump : Clump -> Hand -> Table -> Int -> List Draft
 formClump draft hand table currentScore =
     let
@@ -278,18 +279,9 @@ formClump draft hand table currentScore =
             Run v -> v
     in
         if draftLen >= 3 then
-            let
-                draftNotClump = case draft of
-                    Group v -> v
-                    Run v -> v
-            in
-            [((draftNotClump, (hand, table)), currentScore)]
+            [((draft, (hand, table)), currentScore)]
         else
             let
-                nDraft = draft
-                nHand = hand
-                nTable = table
-                nScore = currentScore
 
                 sortedDraft =
                     case (sortCards draft) of
@@ -300,15 +292,62 @@ formClump draft hand table currentScore =
                 runLastCard = lastClumpCard sortedDraft
                 runLastCardValue = cardValue runLastCard
 
-                shortlist
-                    = if (runLastCardValue + 1) > 13 then
-                        []
+                nextTargetValue = runLastCardValue + 1
+                nextTargetCard = case runLastCard of
+                    Blue v -> Blue nextTargetValue
+                    Green v -> Green nextTargetValue
+                    Red v -> Red nextTargetValue
+                    Yellow v -> Yellow nextTargetValue
+
+                findFromHand =
+                    if nextTargetValue < 13 && cardPresentHand hand nextTargetCard then
+                        case (removeCardHand hand nextTargetCard) of
+                            Just v ->
+                                [(nextTargetCard
+                                 , v
+                                 , table)]
+                            Nothing ->
+                                []
                     else
-                        [] ++ []
+                        []
+
+
+
+                findFromTable =
+                    if nextTargetValue < 13 then
+                        let
+                            (found, oldClump) = case (cardPresentTable table nextTargetCard) of
+                                Just clump -> (True, clump)
+                                Nothing -> (False, Run [])
+
+                            {- MUST CHECK IF THIS CAN BE DONE. TODO! -}
+                            newClump = removeAndReorderCards nextTargetCard oldClump
+                            newTable = replaceClump table oldClump oldClump
+                        in
+                            if found then
+                                [ (nextTargetCard
+                                , hand
+                                , newTable)]
+                            else
+                                []
+                    else
+                        []
+
+
+                mapFormClump = \n ->
+                    let
+                        (nextTargetCard, updatedHand, updatedTable) = n
+                        nDraft = addCard nextTargetCard draft
+                        nScore = currentScore + nextTargetValue
+                    in
+                        (formClump nDraft updatedHand updatedTable nScore)
+
+                shortlist
+                    = findFromHand ++ findFromTable
 
                 {- FOR GROUP PROCESS SEPARATELY -}
             in
-                (formClump nDraft nHand nTable nScore)
+                List.foldl (++) [] (List.map mapFormClump shortlist)
 
 {- calls formClump -}
 formClumpRunner : Card -> Hand -> Table -> Possibility

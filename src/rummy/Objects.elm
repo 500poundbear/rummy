@@ -12,10 +12,13 @@ type Clump = Group Cards
 
 type alias Clumps = List Clump
 
+type alias DraftCards = Cards
 type alias Hand = Cards
 type alias Table = Clumps
 
 type alias Possibility = Maybe ((Hand, Table), Int)
+
+type alias Draft = ((List Card, (Hand, Table)), Int)
 
 cardValue : Card -> Int
 cardValue card =
@@ -131,6 +134,28 @@ removeCardHand hand card =
         else
             Nothing
 
+
+lastClumpCard : Clump -> Card
+lastClumpCard clump =
+    case clump of
+        Group v ->
+            if List.length v <= 1 then
+                case List.head v of
+                    Just crd -> crd
+                    Nothing -> Blue -2
+            else
+                case List.tail v of
+                    Just rst -> lastClumpCard (Group rst)
+                    Nothing -> Blue -3
+        Run v ->
+            if List.length v <= 1 then
+                case List.head v of
+                    Just crd -> crd
+                    Nothing -> Blue -2
+            else
+                case List.tail v of
+                    Just rst -> lastClumpCard (Run rst)
+                    Nothing -> Blue -3
 
 addCard : Card -> Clump -> Clump
 addCard card clump =

@@ -23,6 +23,23 @@ pickRuns table =
     in
     List.filter isRun table
 
+fitGroupRunner : Card -> Hand -> Table -> Possibility
+fitGroupRunner card hand table =
+    let
+        groups = pickGroups table
+        highestYieldingClump = getPositiveResult <|List.map (fitGroup card) groups {- Abit futile -}
+    in
+        case highestYieldingClump of
+            Just v ->
+                let
+                    ((newClump, newCards), val) = v
+                    oldClump = removeCard card newClump
+                    newTable = replaceClump table oldClump newClump
+                in
+                    Just ((hand, newTable), val)
+            Nothing -> Nothing
+
+
 {- Since it is already a group, this is the 4++ card -}
 fitGroup : Card -> Clump -> Maybe ((Clump, Cards), Int)
 fitGroup card group =
@@ -34,11 +51,37 @@ fitGroup card group =
         cardHVal = case (List.head cards) of
             Nothing -> -1
             Just v -> cardValue v
+        cardSuitValue = cardSuit card
+        otherCardsSuitValues = List.map cardSuit cards
+        cardSuitExists = \n -> n == cardSuitValue
     in
-        if cardVal == cardHVal then
+        if cardVal == cardHVal && List.isEmpty (List.filter cardSuitExists otherCardsSuitValues) then
             Just <| ((Group (cards ++ [card]), []), cardHVal)
         else
             Nothing
+
+getPositiveResult : List (Maybe ((Clump, Cards), Int)) -> Maybe ((Clump, Cards), Int)
+getPositiveResult lis =
+    let
+        fn : Maybe ((Clump, Cards), Int) -> Maybe ((Clump, Cards), Int) -> Maybe ((Clump, Cards), Int)
+        fn = \a b ->
+            case a of
+                Nothing ->
+                    b
+                Just v ->
+                    case b of
+                        Nothing -> Just v
+                        Just w ->
+                            let
+                                (vComb, vVal) = v
+                                (wComb, wVal) = w
+                            in
+                                if vVal > wVal then
+                                    Just v
+                                else
+                                    Just w
+    in
+        List.foldl fn (Nothing) lis
 
 {- The aim is to select a list of clumps, and just pick the first-}
 {- Hand is redundant, but here for the functions to require the same params -}
@@ -46,21 +89,19 @@ fitRunRunner : Card -> Hand -> Table -> Possibility
 fitRunRunner card hand table =
     let
         runs = pickRuns table
-        oldClump = case (List.head runs) of
-            Just v -> v
-            Nothing -> Group []
+        highestYieldingClump = getPositiveResult <|List.map (fitRun card) runs
     in
-        case (List.head<|List.map (fitRun card) runs) of
+        case highestYieldingClump of
             Just v ->
                 let
-                    ((newClump, _), score) = case v of
-                        Just v -> v
-                        Nothing -> ((Group [], []), -1)
-
+                    ((newClump, newCards), val) = v
+                    oldClump = removeCard card newClump
                     newTable = replaceClump table oldClump newClump
                 in
-                    Just ((hand, newTable), score)
+                    Just ((hand, newTable), val)
             Nothing -> Nothing
+
+
 
 {- Since it is already a run, this is the 4++ card -}
 fitRun : Card -> Clump -> Maybe ((Clump, Cards), Int)
@@ -85,14 +126,7 @@ fitRun card run =
             else if cardVal == (lstCardValue) + 1 then
                 Just ((Run (cards ++ [card]), []), cardVal)
             else
-                {- Return the rest if a breakup is possible -}
-                if cardsLen >= 4 then
-                    if cardsLen % 2 == 0 then
-                        Nothing {- TODO -}
-                    else
-                        Nothing {- TODO -}
-                else
-                    Nothing
+                Nothing
         else
             Nothing
 
@@ -147,6 +181,7 @@ formFromHand card hand table =
     let
         res =
             [ fitRunRunner card hand table
+            , fitGroupRunner card hand table
             ]
         maxFn : Possibility -> Possibility -> Possibility
         maxFn newPossibility currentRecord =
@@ -229,3 +264,57 @@ fitterRunner hand table =
                 in
                     fitterRunner nhand ntable
             Nothing -> (hand, table)
+
+
+{- Given a draft, attempt to lengthen it until you get 3 -}
+{- formClump doesn't look for cards in both directions, it only looks
+   for cards 1 larger than current card (to reduce search space) -}
+{- Draft: ((List Card, (Hand, Table)), Int) -}
+formClump : Clump -> Hand -> Table -> Int -> List Draft
+formClump draft hand table currentScore =
+    let
+        draftLen = List.length <| case draft of
+            Group v -> v
+            Run v -> v
+    in
+        if draftLen >= 3 then
+            let
+                draftNotClump = case draft of
+                    Group v -> v
+                    Run v -> v
+            in
+            [((draftNotClump, (hand, table)), currentScore)]
+        else
+            let
+                nDraft = draft
+                nHand = hand
+                nTable = table
+                nScore = currentScore
+
+                sortedDraft =
+                    case (sortCards draft) of
+                        Group v -> Group v
+                        Run v -> Run v
+
+                {- Process RUN -}
+                runLastCard = lastClumpCard sortedDraft
+                runLastCardValue = cardValue runLastCard
+
+                shortlist
+                    = if (runLastCardValue + 1) > 13 then
+                        []
+                    else
+                        [] ++ []
+
+                {- FOR GROUP PROCESS SEPARATELY -}
+            in
+                (formClump nDraft nHand nTable nScore)
+
+{- calls formClump -}
+formClumpRunner : Card -> Hand -> Table -> Possibility
+formClumpRunner card hand table =
+    let
+        resRun = formClump (Run [card]) hand table (cardValue card)
+        resGroup = formClump (Group [card]) hand table (cardValue card)
+    in
+        Nothing

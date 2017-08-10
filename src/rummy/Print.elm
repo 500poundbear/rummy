@@ -61,6 +61,8 @@ printBoth hand table =
             , div [class "message-body"]
                 [ a [class "button", class "is-info", onClick NextMove] [text "Step through"]
                 , p [] [text "Allows you to examine algorithm results"]
+                , a [class "button", class "is-info", onClick NextMove] [text "All moves"]
+                , p [] [text "Make all moves until there is no more to be made"]
                 ]
             ]
         ]

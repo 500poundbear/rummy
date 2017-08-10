@@ -11,7 +11,7 @@ import Fitter exposing (..)
 {- Structure -}
 import Msg exposing (..)
 
-initialHand = List.map Blue (List.range 4 10) ++ List.map Green (List.range 1 5) 
+initialHand = [Green 5, Red 5, Blue 5] ++ List.map Blue (List.range 4 10) ++ List.map Green (List.range 1 5)
     ++ List.map Yellow (List.range 4 10)
 initialTable =
     [ Group [Blue 4, Red 4, Yellow 4]

@@ -16,6 +16,7 @@ import Html.Events exposing (onClick, onInput)
 import Msg exposing (..)
 
 import Rummy exposing (..)
+import Fitter exposing (..)
 
 type alias Model = RummyModel
 
@@ -44,6 +45,16 @@ update msg model =
     case msg of
         OnLocationChange location ->
             (model, Cmd.none)
+        NextMove ->
+            let
+                (newHand, newTable) = fitterRunner (.hand model) (.table model)
+                newModel = {
+                    model |
+                        hand = newHand
+                        , table = newTable
+                }
+            in
+            (newModel, Cmd.none)
         _ -> (model, Cmd.none )
 
 

@@ -432,6 +432,8 @@ sameClump clump1 clump2 =
 removeClump : Clump -> Table -> Table
 removeClump clump table = table
 
+addClump : Clump -> Table -> Table
+addClump clump table = table ++ [clump]
 
 {- Generate a list of Cards, given the chain length we want (3)-}
 {- Exclude the current card -}
@@ -475,3 +477,22 @@ getBestPossibility possibilities =
                     currentRecord
     in
         List.foldl maxFn Nothing possibilities
+
+{- draft is in the shape of ((Clump, (Hand, Table)), Int) -}
+getBestDraft : List Draft -> Maybe Draft
+getBestDraft drafts =
+    let
+        fn a b =
+            let
+                ((ac, (ah, at)), ai) = a
+                ((bc, (bh, bt)), bi) = b
+            in
+                if ai > bi then
+                    a
+                else
+                    b
+    in
+    if List.isEmpty drafts then
+        Nothing
+    else
+        Just <| List.foldl fn ((Run [], ([], [])), 0) drafts

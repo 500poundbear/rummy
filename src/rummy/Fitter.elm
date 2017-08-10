@@ -182,6 +182,7 @@ formFromHand card hand table =
         res =
             [ fitRunRunner card hand table
             , fitGroupRunner card hand table
+            , formClumpRunner card hand table
             ]
         maxFn : Possibility -> Possibility -> Possibility
         maxFn newPossibility currentRecord =
@@ -363,6 +364,19 @@ formClumpRunner card hand table =
     let
         resRun = formClump (Run [card]) hand table (cardValue card)
         resGroup = formClump (Group [card]) hand table (cardValue card)
+
+        consolidated = resRun ++ resGroup
+
     in
-        {- TODO -}
-        Nothing
+        case (getBestDraft consolidated) of
+            Just v ->
+                let
+                    ((bestDraftClump, (bestDraftHand, bestDraftTable)), bestDraftScore) = v
+
+                    newTable = addClump bestDraftClump bestDraftTable
+                    newHand = bestDraftHand
+                    newScore = bestDraftScore
+                in
+                    Just ((newHand, newTable), newScore)
+            Nothing ->
+                Nothing

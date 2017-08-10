@@ -2,6 +2,8 @@ module Print exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
+
 import Msg exposing (..)
 import Objects exposing (..)
 
@@ -52,5 +54,13 @@ printBoth hand table =
         , tableHtml
         , h3 [] [text "Hand"]
         , handHtml
-        , h3 [] [text "Controls"]
+        , br [] []
+        , article [class "message"]
+            [ div [class "message-header"]
+                [ p [] [text "Controls"]]
+            , div [class "message-body"]
+                [ a [class "button", class "is-info", onClick NextMove] [text "Step through"]
+                , p [] [text "Allows you to examine algorithm results"]
+                ]
+            ]
         ]

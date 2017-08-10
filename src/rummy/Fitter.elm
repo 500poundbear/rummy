@@ -265,7 +265,6 @@ fitterRunner hand table =
                     fitterRunner nhand ntable
             Nothing -> (hand, table)
 
-
 {- Given a draft, attempt to lengthen it until you get 3 -}
 {- formClump doesn't look for cards in both directions, it only looks
    for cards 1 larger than current card (to reduce search space) -}
@@ -280,6 +279,9 @@ formClump draft hand table currentScore =
     in
         if draftLen >= 3 then
             [((draft, (hand, table)), currentScore)]
+        else if draftLen == 0 then
+            {- Means an empty clump, don't bother -}
+            []
         else
             let
 
@@ -299,35 +301,42 @@ formClump draft hand table currentScore =
                     Red v -> Red nextTargetValue
                     Yellow v -> Yellow nextTargetValue
 
-                findFromHand =
+                findRunFromHand =
                     if nextTargetValue < 13 && cardPresentHand hand nextTargetCard then
                         case (removeCardHand hand nextTargetCard) of
                             Just v ->
                                 [(nextTargetCard
                                  , v
-                                 , table)]
+                                 , table
+                                 , nextTargetValue + currentScore)]
                             Nothing ->
                                 []
                     else
                         []
 
-
-
-                findFromTable =
+                findRunFromTable =
                     if nextTargetValue < 13 then
                         let
                             (found, oldClump) = case (cardPresentTable table nextTargetCard) of
                                 Just clump -> (True, clump)
                                 Nothing -> (False, Run [])
 
-                            {- MUST CHECK IF THIS CAN BE DONE. TODO! -}
+
+                            {- Check if this will result in a clump being torn down -}
+                            clumpBefore = takeCardUntil oldClump nextTargetCard
+                            clumpAfter = takeCardAfter oldClump nextTargetCard
+
                             newClump = removeAndReorderCards nextTargetCard oldClump
-                            newTable = replaceClump table oldClump oldClump
-                        in
+
+                            newHand = hand
+                            newTable = replaceClump table oldClump newClump
+                            newScore = currentScore
+                         in
                             if found then
                                 [ (nextTargetCard
-                                , hand
-                                , newTable)]
+                                , newHand
+                                , newTable
+                                , newScore)]
                             else
                                 []
                     else
@@ -336,14 +345,13 @@ formClump draft hand table currentScore =
 
                 mapFormClump = \n ->
                     let
-                        (nextTargetCard, updatedHand, updatedTable) = n
+                        (nextTargetCard, updatedHand, updatedTable, updatedScore) = n
                         nDraft = addCard nextTargetCard draft
-                        nScore = currentScore + nextTargetValue
                     in
-                        (formClump nDraft updatedHand updatedTable nScore)
+                        (formClump nDraft updatedHand updatedTable updatedScore)
 
                 shortlist
-                    = findFromHand ++ findFromTable
+                    = findRunFromHand ++ findRunFromTable
 
                 {- FOR GROUP PROCESS SEPARATELY -}
             in
@@ -356,4 +364,5 @@ formClumpRunner card hand table =
         resRun = formClump (Run [card]) hand table (cardValue card)
         resGroup = formClump (Group [card]) hand table (cardValue card)
     in
+        {- TODO -}
         Nothing

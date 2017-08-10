@@ -61,15 +61,15 @@ suite =
                         expectedResults =
                             [ (((Run [Red 5, Red 6, Red 7]
                                 , ([Blue 5, Yellow 10],
-                                    [ Group [Green 6, Blue 6, Yellow 6]
-                                    , Group [Green 7, Blue 7, Yellow 7]
+                                    [ Group [Blue 6, Green 6,Yellow 6]
+                                    , Group [Blue 7, Green 7, Yellow 7]
                                     ]
                                 )),
                                 5))
                             ]
                     in
                         Expect.equal res expectedResults
-            , test "forms runs appropriately (from both)" <|
+            , test "forms returns [] (from both)" <|
                 \_ ->
                     let
                         clump = Run [Red 5]
@@ -79,6 +79,45 @@ suite =
                         expectedResults = []
                     in
                         Expect.equal res expectedResults
+            , test "forms returns correct results (from both)" <|
+                \_ ->
+                    let
+                        clump = Run [Red 5]
+                        hand = [Blue 5, Yellow 10, Red 6]
+                        table = [Run [Red 7, Red 8, Red 9, Red 10]]
+                        res = formClump clump hand table 5
+                        expectedResults = [
+                            (((Run [Red 5, Red 6, Red 7]
+                            , ([Blue 5, Yellow 10],
+                            [ Run [Red 8, Red 9, Red 10] ]
+                            )),
+                            11))
+                        ]
+                    in
+                        Expect.equal res expectedResults
+            , test "forms returns correct results, splits and reforms table" <|
+                \_ ->
+                    let
+                        clump = Run [Red 5, Red 6]
+                        hand = [Blue 10]
+                        table =
+                            [ Run [Red 6, Red 7, Red 8]
+                            , Run [Red 3, Red 4, Red 5]
+                            , Run [Red 9, Red 10, Red 11]
+                            ]
+                        res = formClump clump hand table 11
+                        expectedResults = [
+                            (((Run [Red 5, Red 6, Red 7]
+                            , ([Blue 10],
+                            [ Run [Red 3, Red 4, Red 5, Red 6]
+                            , Run [Red 8, Red 9, Red 10, Red 11]
+                            ]
+                            )),
+                            11))
+                        ]
+                    in
+                        Expect.equal res expectedResults
+
             ]
         , describe "fitGroup & fitGroupRunner"
             [ test "fitGroup won't add card if group is full" <|

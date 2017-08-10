@@ -52,4 +52,5 @@ printBoth hand table =
         , tableHtml
         , h3 [] [text "Hand"]
         , handHtml
+        , h3 [] [text "Controls"]
         ]

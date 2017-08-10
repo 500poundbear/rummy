@@ -134,6 +134,59 @@ removeCardHand hand card =
         else
             Nothing
 
+compareListInt : List Int -> List Int -> Bool
+compareListInt a b =
+    let
+        ahead = case (List.head a) of
+            Just v -> v
+            Nothing -> -999
+        bhead = case (List.head b) of
+            Just v -> v
+            Nothing -> -999
+        arest = case (List.tail a) of
+            Just v -> v
+            Nothing -> []
+        brest = case (List.tail b) of
+            Just v -> v
+            Nothing -> []
+    in
+        if List.isEmpty a && List.isEmpty b then
+            True
+        else if List.isEmpty a || List.isEmpty b then
+            False
+        else if ahead == bhead then
+            True && compareListInt arest brest
+        else
+            False
+
+
+{- Define proper group to be [3,4] in length, having colours from each suit-}
+properClump : Clump -> Bool
+properClump clump =
+    case clump of
+        Group v ->
+            True
+        Run v ->
+            let
+                firstCard = firstClumpCard clump
+                lastCard = lastClumpCard clump
+                values = List.map cardValue v
+                leng = List.length v
+            in
+                leng >= 3 &&
+                    compareListInt values (List.range (cardValue firstCard) (cardValue lastCard))
+
+firstClumpCard : Clump -> Card
+firstClumpCard clump =
+    case clump of
+        Group v ->
+            case List.head v of
+                Just crd -> crd
+                Nothing -> Blue -2
+        Run v ->
+            case List.head v of
+                Just crd -> crd
+                Nothing -> Blue -2
 
 lastClumpCard : Clump -> Card
 lastClumpCard clump =
@@ -229,6 +282,60 @@ patchClump card oldcard clump =
         Group v -> sortCards <| addAndReorderCards card <|removeCard oldcard clump
         Run v -> sortCards <| addAndReorderCards card <| removeCard oldcard clump
 
+takeCardUntil : Clump -> Card -> Clump
+takeCardUntil clump card =
+    let
+        cards = case (sortCards clump) of
+            Group v -> v
+            Run v -> v
+        fn = \cl cd ->
+            let
+                headC = case (List.head cl) of
+                    Just v -> v
+                    Nothing -> Yellow -1
+                restC = case (List.tail cl) of
+                    Just v -> v
+                    Nothing -> []
+            in
+                if List.isEmpty cl then
+                    []
+                else if sameCard cd headC then
+                    []
+                else
+                    [headC] ++ fn restC cd
+        res = fn cards card
+    in
+        case clump of
+            Group v -> Group res
+            Run v -> Run res
+
+
+takeCardAfter : Clump -> Card -> Clump
+takeCardAfter clump card =
+    let
+        cards = case (sortCards clump) of
+            Group v -> v
+            Run v -> v
+        fn = \cl cd ->
+            let
+                headC = case (List.head cl) of
+                    Just v -> v
+                    Nothing -> Yellow -1
+                restC = case (List.tail cl) of
+                    Just v -> v
+                    Nothing -> []
+            in
+                if List.isEmpty cl then
+                    []
+                else if sameCard cd headC then
+                    restC
+                else
+                    fn restC cd
+        res = fn cards card
+    in
+        case clump of
+            Group v -> Group res
+            Run v -> Run res
 
 cardPresentClump : Clump -> Card -> Bool
 cardPresentClump clump card =

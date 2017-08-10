@@ -310,6 +310,38 @@ suite =
                             ]
                     in
                         Expect.equal clumpGroupAfter (patchClump newCard oldCard clumpGroup)
+            , test "can takeCardUntil card " <|
+                \_ ->
+                    let
+                        tgt = Red 7
+                        inp = Run
+                            [ Red 4
+                            , Red 5
+                            , Red 6
+                            , Red 7
+                            , Red 8
+                            , Red 9
+                            , Red 10
+                            ]
+                        expected = (Run [Red 4, Red 5, Red 6])
+                    in
+                        Expect.equal (takeCardUntil inp tgt) expected
+            , test "can takeCardAfter card " <|
+                \_ ->
+                    let
+                        tgt = Red 7
+                        inp = Run
+                            [ Red 4
+                            , Red 5
+                            , Red 6
+                            , Red 7
+                            , Red 8
+                            , Red 9
+                            , Red 10
+                            ]
+                        expected = (Run [Red 8, Red 9, Red 10])
+                    in
+                        Expect.equal (takeCardAfter inp tgt) expected
             , test "can return Maybe clump when finding if card is present in table" <|
                 \_ ->
                     let
